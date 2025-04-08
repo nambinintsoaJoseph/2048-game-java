@@ -8,31 +8,72 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import javax.swing.Timer;
 
 public class GamePanel extends JPanel {
     private int[][] board;
     private JLabel[][] tiles;
     private final int size = 4;
     private int score;
-    private int target; // Nouveau champ pour stocker l'objectif
+    private int target;
+    private int timeLeft;
+    private Timer timer;
+    private JLabel timeLabel;
+    private boolean gameActive;
 
-    public GamePanel(int target) {
-        this.target = target; // Initialisation de l'objectif
-        // Initialisation des tableaux en premier
+    public GamePanel(int target, int timeLimit) {
+        this.target = target;
+        this.timeLeft = timeLimit;
+        this.gameActive = true;
+        
+        setLayout(new BorderLayout());
+        
+        // Panel pour le jeu
+        JPanel gameBoard = new JPanel();
+        gameBoard.setLayout(new GridLayout(size, size));
+        gameBoard.setPreferredSize(new Dimension(400, 400));
+        
+        // Panel pour les informations (score et temps)
+        JPanel infoPanel = new JPanel(new GridLayout(1, 2));
+        timeLabel = new JLabel("Temps: " + formatTime(timeLeft), SwingConstants.CENTER);
+        timeLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        JLabel scoreLabel = new JLabel("Score: " + score, SwingConstants.CENTER);
+        scoreLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        
+        infoPanel.add(timeLabel);
+        infoPanel.add(scoreLabel);
+        
+        add(infoPanel, BorderLayout.NORTH);
+        add(gameBoard, BorderLayout.CENTER);
+
+        // Initialisation des tableaux
         board = new int[size][size];
         tiles = new JLabel[size][size];
-        
-        setPreferredSize(new Dimension(400, 400));
-        setLayout(new GridLayout(size, size));
         score = 0;
 
         initializeBoard();
         addInitialTiles();
-        setupUI();
+        setupUI(gameBoard);
+        
+        // Configuration du timer
+        timer = new Timer(1000, e -> {
+            if (gameActive) {
+                timeLeft--;
+                timeLabel.setText("Temps: " + formatTime(timeLeft));
+                if (timeLeft <= 0) {
+                    gameActive = false;
+                    timer.stop();
+                    JOptionPane.showMessageDialog(this, "Temps écoulé! Game Over! Score: " + score);
+                }
+            }
+        });
+        timer.start();
         
         addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
+                if (!gameActive) return;
+                
                 boolean moved = false;
                 switch (e.getKeyCode()) {
                     case KeyEvent.VK_LEFT:  moved = moveLeft();  break;
@@ -44,10 +85,15 @@ public class GamePanel extends JPanel {
                 if (moved) {
                     addNewTile();
                     refreshTiles();
+                    scoreLabel.setText("Score: " + score);
                     if (hasWon()) {
+                        gameActive = false;
+                        timer.stop();
                         JOptionPane.showMessageDialog(GamePanel.this, 
                             "Félicitations! Vous avez atteint " + target + "! Score: " + score);
                     } else if (isGameOver()) {
+                        gameActive = false;
+                        timer.stop();
                         JOptionPane.showMessageDialog(GamePanel.this, "Game Over! Score: " + score);
                     }
                 }
@@ -56,7 +102,27 @@ public class GamePanel extends JPanel {
         setFocusable(true);
     }
 
-    // Nouvelle méthode pour vérifier si le joueur a gagné
+    private String formatTime(int seconds) {
+        int minutes = seconds / 60;
+        int secs = seconds % 60;
+        return String.format("%02d:%02d", minutes, secs);
+    }
+
+    private void setupUI(JPanel gameBoard) {
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                JLabel label = new JLabel("", SwingConstants.CENTER);
+                label.setPreferredSize(new Dimension(100, 100));
+                label.setOpaque(true);
+                label.setBackground(new Color(0xcdc1b4));
+                label.setFont(new Font("Arial", Font.BOLD, 32));
+                tiles[i][j] = label;
+                gameBoard.add(label);
+            }
+        }
+        refreshTiles();
+    }
+
     private boolean hasWon() {
         for (int[] row : board) {
             for (int num : row) {
@@ -68,7 +134,7 @@ public class GamePanel extends JPanel {
         return false;
     }
 
-    // Le reste du code reste inchangé...
+    // Le reste des méthodes reste inchangé...
     private void initializeBoard() {
         for (int[] row : board) {
             Arrays.fill(row, 0);
@@ -78,21 +144,6 @@ public class GamePanel extends JPanel {
     private void addInitialTiles() {
         addNewTile();
         addNewTile();
-    }
-
-    private void setupUI() {
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                JLabel label = new JLabel("", SwingConstants.CENTER);
-                label.setPreferredSize(new Dimension(100, 100));
-                label.setOpaque(true);
-                label.setBackground(new Color(0xcdc1b4));
-                label.setFont(new Font("Arial", Font.BOLD, 32));
-                tiles[i][j] = label;
-                add(label);
-            }
-        }
-        refreshTiles();
     }
 
     private void refreshTiles() {

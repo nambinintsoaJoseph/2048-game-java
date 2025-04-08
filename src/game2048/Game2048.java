@@ -21,10 +21,16 @@ public class Game2048 extends JFrame {
             options[0]);
         
         int target = 2048; // Par défaut niveau 3
-        if (choice == 0) target = 512;
-        else if (choice == 1) target = 1024;
+        int timeLimit = 300; // 5 minutes pour le niveau 3
+        if (choice == 0) {
+            target = 512;
+            timeLimit = 180; // 3 minutes pour le niveau 1
+        } else if (choice == 1) {
+            target = 1024;
+            timeLimit = 240; // 4 minutes pour le niveau 2
+        }
         
-        GamePanel gamePanel = new GamePanel(target);
+        GamePanel gamePanel = new GamePanel(target, timeLimit);
         add(gamePanel);
         
         pack();
