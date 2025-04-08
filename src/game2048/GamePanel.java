@@ -14,8 +14,10 @@ public class GamePanel extends JPanel {
     private JLabel[][] tiles;
     private final int size = 4;
     private int score;
+    private int target; // Nouveau champ pour stocker l'objectif
 
-    public GamePanel() {
+    public GamePanel(int target) {
+        this.target = target; // Initialisation de l'objectif
         // Initialisation des tableaux en premier
         board = new int[size][size];
         tiles = new JLabel[size][size];
@@ -42,7 +44,10 @@ public class GamePanel extends JPanel {
                 if (moved) {
                     addNewTile();
                     refreshTiles();
-                    if (isGameOver()) {
+                    if (hasWon()) {
+                        JOptionPane.showMessageDialog(GamePanel.this, 
+                            "Félicitations! Vous avez atteint " + target + "! Score: " + score);
+                    } else if (isGameOver()) {
                         JOptionPane.showMessageDialog(GamePanel.this, "Game Over! Score: " + score);
                     }
                 }
@@ -51,6 +56,19 @@ public class GamePanel extends JPanel {
         setFocusable(true);
     }
 
+    // Nouvelle méthode pour vérifier si le joueur a gagné
+    private boolean hasWon() {
+        for (int[] row : board) {
+            for (int num : row) {
+                if (num >= target) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // Le reste du code reste inchangé...
     private void initializeBoard() {
         for (int[] row : board) {
             Arrays.fill(row, 0);
